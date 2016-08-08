@@ -118,7 +118,7 @@ if not mustRun(localPath):
     logger.info('Theres no need to execute, Bye!')
     exit(1)
 
-currentMonth = calendar.month_name[datetime.datetime.now().month]
+lastMonth = calendar.month_name[datetime.datetime.now().month - 1] # Minus one bacause we want the last month, not the current
 currentYear = datetime.datetime.now().year
 
 # Accesign to Google Spreadsheets
@@ -127,7 +127,7 @@ credentials = ServiceAccountCredentials.from_json_keyfile_name(localPath+'/Contr
 gc = gspread.authorize(credentials)
 
 # Open a worksheet from spreadsheet with one shot
-wks = gc.open("Presupuesto anual "+str(currentYear)).worksheet(currentMonth)
+wks = gc.open("Presupuesto anual "+str(currentYear)).worksheet(lastMonth)
 
 # Reading the spend data from google
 spendRecords = extractSpendDataFromGoogleDocs()
