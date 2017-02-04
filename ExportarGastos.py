@@ -13,23 +13,25 @@ from itertools import groupby
 
 __author__ = 'rdelgado'
 
-''' Parse and get the credit transactions data from the bank registry '''
+
+# ''' Parse and get the credit transactions data from the bank registry '''
 def getCreditTransactionList(path):
     bankData = open(path, 'r').read()
     soup = BeautifulSoup(bankData)
-    table = soup.find("table", {"id" : "detalle_transacciones"})
+    table = soup.find("table", {"id": "detalle_transacciones"})
     readedRows = []
     for row in table.findAll('tr')[2:]:
         cols = row.findAll('td')
         try:
             if float(cols[2].div.span.string.replace(",", "")) < 0:
-                continue;
+                continue
             readedRows.append([parseBankDate(cols[0].div.span.string.strip()), cols[1].div.span.string.strip(), 'Credito', float(cols[2].div.span.string.replace(",", ""))])
         except Exception as e:
             print(e)
     return readedRows
 
-''' Choose the category for the credit payment from the debit transaction data. '''
+
+# ''' Choose the category for the credit payment from the debit transaction data. '''
 def setPaymentCategory(concept):
     if 'PAGO TARJETA' in concept:
         return 'Pago credito'
@@ -37,26 +39,28 @@ def setPaymentCategory(concept):
         return 'Debito'
 
 
-''' Parse and get the debit transaction data from the bank registry '''
+# ''' Parse and get the debit transaction data from the bank registry '''
 def getDebitTransactionList(path):
     bankData = open(path, 'r').read()
     soup = BeautifulSoup(bankData)
-    table = soup.find("table", {"class" : "transaction"})
+    table = soup.find("table", {"class": "transaction"})
     readedRows = []
     for row in table.findAll('tr'):
         cols = row.findAll('td')
         try:
             if float(cols[2].div.span.string.replace(",", "")) < 0:
-                continue;
+                continue
             readedRows.append([parseBankDate(cols[0].div.span.string.strip()), cols[1].div.span.string.strip(), setPaymentCategory(cols[1].div.span.string.strip()), float(cols[2].div.span.string.replace(",", ""))])
         except Exception as e:
             print(e)
     return readedRows
 
+
 def key(item):
     return unicode(item[2])
 
-''' Group by category '''
+
+# ''' Group by category '''
 def groupRecors(records):
     category = lambda x: unicode(x[2])
     sortedRecords = sorted(records, key=category)
@@ -70,21 +74,23 @@ def groupRecors(records):
     return records
 
 
-''' Parse date from bank data'''
+# ''' Parse date from bank data'''
 def parseBankDate(date):
     year = date[6:]
     month = date[3:-5]
     day = date[:2]
     return month + "/" + day + "/" + year
 
-''' Parse date '''
+
+# ''' Parse date '''
 def parseDate(rawDate):
     year = rawDate[:4]
     month = rawDate[4:-2]
     day = rawDate[6:]
     return month + "/" + day + "/" + year
 
-''' Upload the data to Google Docs '''
+
+# ''' Upload the data to Google Docs '''
 def extractSpendDataFromGoogleDocs():
     # Open a worksheet from spreadsheet with one shot
     wks = gc.open("AndroMoney").sheet1
@@ -95,13 +101,14 @@ def extractSpendDataFromGoogleDocs():
             cleanRecords.append([parseDate(row[5]), row[8], row[3], float(row[2])])
     return cleanRecords
 
-''' Check if the tool must run '''
+
+# ''' Check if the tool must run '''
 def mustRun(localPath):
     return len(glob.glob(localPath + '/*Debit.html')) > 0 or len(glob.glob(localPath + '/*Credit.html')) > 0
 
 
-''' Main code of the tool '''
-## Configuring logging facilities
+# ''' Main code of the tool '''
+# Configuring logging facilities
 reload(sys)
 sys.setdefaultencoding('utf-8')
 localPath = sys.argv[1]
@@ -120,6 +127,8 @@ if not mustRun(localPath):
 
 lastMonth = calendar.month_name[datetime.datetime.now().month - 1] # Minus one bacause we want the last month, not the current
 currentYear = datetime.datetime.now().year
+
+logger.info("Month to report data: " + str(lastMonth) + " " + str(currentYear))
 
 # Accesign to Google Spreadsheets
 scope = ['https://spreadsheets.google.com/feeds']
@@ -157,11 +166,3 @@ if len(transactions) > 0:
         wks.update_cell(30 + index, 7, str(row[0]))
         wks.update_cell(30 + index, 8, unicode(str(row[1])))
         wks.update_cell(30 + index, 9, unicode(str(row[3])))
-
-
-
-
-
-
-
-
