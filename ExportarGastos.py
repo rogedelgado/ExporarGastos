@@ -48,6 +48,8 @@ def getDebitTransactionList(path):
     for row in table.findAll('tr'):
         cols = row.findAll('td')
         try:
+            if "RETIRO CAJERO" in cols[1].div.span.string:
+                continue
             if float(cols[2].div.span.string.replace(",", "")) < 0:
                 continue
             readedRows.append([parseBankDate(cols[0].div.span.string.strip()), cols[1].div.span.string.strip(), setPaymentCategory(cols[1].div.span.string.strip()), float(cols[2].div.span.string.replace(",", ""))])
