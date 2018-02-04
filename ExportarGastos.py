@@ -48,7 +48,7 @@ def getDebitTransactionList(path):
     for row in table.findAll('tr'):
         cols = row.findAll('td')
         try:
-            if "RETIRO CAJERO" in cols[1].div.span.string:
+            if "RETIRO" in cols[1].div.span.string:
                 continue
             if float(cols[2].div.span.string.replace(",", "")) < 0:
                 continue
@@ -71,7 +71,7 @@ def groupRecors(records):
     for key, values in grouped:
         sum = 0
         for v in values:
-            sum = sum + float(v[3]) * -1;
+            sum = sum + float(v[3]);
         records.append([key, sum])
     return records
 
@@ -100,13 +100,14 @@ def extractSpendDataFromGoogleDocs():
     cleanRecords = []
     for row in records:
         if len(row[7]) == 0:
-            cleanRecords.append([parseDate(row[5]), row[8], row[3], float(row[2])])
+            cleanRecords.append([parseDate(row[5]), row[8], row[3], float(row[2]) * -1])
     return cleanRecords
 
 
 # ''' Check if the tool must run '''
 def mustRun(localPath):
-    return len(glob.glob(localPath + '/*Debit.html')) > 0 or len(glob.glob(localPath + '/*Credit.html')) > 0
+    # return len(glob.glob(localPath + '/*Debit.html')) > 0 or len(glob.glob(localPath + '/*Credit.html')) > 0
+    return True
 
 
 # ''' Main code of the tool '''
@@ -130,6 +131,7 @@ if not mustRun(localPath):
 lastMonth = calendar.month_name[datetime.datetime.now().month - 1] # Minus one bacause we want the last month, not the current
 currentYear = datetime.datetime.now().year
 
+
 logger.info("Month to report data: " + str(lastMonth) + " " + str(currentYear))
 
 # Accesign to Google Spreadsheets
@@ -144,14 +146,14 @@ wks = gc.open("Presupuesto anual "+str(currentYear)).worksheet(lastMonth)
 spendRecords = extractSpendDataFromGoogleDocs()
 
 # Reading the spend data from Debit movements
-for f in glob.glob(localPath + '/*Debit.html'):
-    spendRecords.extend(getDebitTransactionList(f))
-    os.remove(f)
+# for f in glob.glob(localPath + '/*Debit.html'):
+#     spendRecords.extend(getDebitTransactionList(f))
+#     os.remove(f)
 
 # Reading the spend data from Credit movements
-for f in glob.glob(localPath + '/*Credit.html'):
-    transactions = getCreditTransactionList(f)
-    os.remove(f)
+# for f in glob.glob(localPath + '/*Credit.html'):
+#     transactions = getCreditTransactionList(f)
+#     os.remove(f)
 
 for index, row in enumerate(groupRecors(spendRecords)):
     wks.update_cell(4 + index, 4, str(row[0]))
